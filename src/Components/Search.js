@@ -11,18 +11,18 @@ export default class Search extends Component {
 
         this.submit = this.submit.bind(this);
         this.onChange = this.onChange.bind(this);
-        
+        this.saveBook = this.saveBook.bind(this);
     }
     submit(e){
-        console.log("submit")
-        console.log(this.state.query)
+ 
         var url = "https://www.googleapis.com/books/v1/volumes?q="+ this.state.query
         var cls = this;
-        fetch(url).then(
-         res => res.json()
-     ).then((result) => {
-        var results = []
-        result.items.forEach(function(item, index){
+        
+        fetch(url)
+        .then(res => res.json())
+        .then((result) => {
+            var results = []
+            result.items.forEach(function(item, index){
 
             results.push({
                 title:item.volumeInfo.title,
@@ -31,15 +31,11 @@ export default class Search extends Component {
                 image:item.volumeInfo.imageLinks.thumbnail,
                 link:item.selfLink,
             })
-        cls.setState({results:results})
-        }
-        )
+            cls.setState({results:results})
+            })
+        });
 
-
-         console.log(result)
-     });
-
-     e.preventDefault();
+        e.preventDefault();
     }
 
     onChange(e){
@@ -47,32 +43,55 @@ export default class Search extends Component {
 
     }
 
-    renderResults(){
-        console.log("results")
-        return this.state.results
+    saveBook(index, e){
+
+        var data = this.state.results[index]
+        var url = "http://localhost:3009/api/books"
+
+        fetch(url,{
+            method: 'POST', 
+            headers : { 
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body:JSON.stringify(data)
+        })
+        .then(res => res.json())
+        .then(
+            (result) => {
+                if (result.msg == 'success'){
+                    alert("Book was successfuly saved!")
+                } else {
+                    alert("Saving book was unsuccessful...")
+                }
+            })
     }
 
     render(){
         
         return (
             <div>
-            <form onSubmit={this.submit}>
-            <input onChange={this.onChange}></input>
-            <input type="submit" value="Submit"></input>
-            </form>
-            results
-            {this.state.results.map(function(book, index){
-                return (
-                    <div>
-                    <p>{book.title}</p>
-                    <img src={book.image}></img>
-                    <p>{book.authors}</p>
-                    <p>{book.description}</p>
-                    <a href={book.link}>book link</a>
-                    <button>save</button>
-                    </div>
-                )
-            })}
+                <h1>search</h1>
+                <form onSubmit={this.submit}>
+                    <input onChange={this.onChange}></input>
+                    <input type="submit" value="Submit"></input>
+                </form>
+                
+                <h1>results</h1>
+                {   
+                    this.state.results.map(function(book, index){
+                        return (
+                            <div>
+                                <p>{book.title}</p>
+                                <img src={book.image}></img>
+                                <p>{book.authors}</p>
+                                <p>{book.description}</p>
+                                <a href={book.link}>book link</a>
+                                <button onClick={this.saveBook.bind(this, index)} i={index}>save</button>
+                            </div>
+                        )
+                    }, this)
+                }
             </div>
             
 
